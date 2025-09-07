@@ -184,6 +184,9 @@ impl PooledClient {
   pub fn client(&mut self) -> &mut DbClient {
     self.client.as_mut().unwrap()
   }
+  pub fn client_ref(&self) -> &DbClient {
+    self.client.as_ref().unwrap()
+  }
 }
 impl Drop for PooledClient {
   fn drop(&mut self) {
