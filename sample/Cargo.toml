@@ -1,0 +1,9 @@
+[package]
+name = "sample"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+anyhow = "1.0.99"
+domner_tech_sql_client ={ path = "../domner_tech_sql_client", features = ["mssql", "pgsql"]}
+tokio = {version = "1.47.1", features = ["full"]}
