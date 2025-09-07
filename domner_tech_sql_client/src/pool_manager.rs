@@ -1,12 +1,13 @@
 use std::{collections::HashMap, sync::Arc};
 
-use crate::MssqlRow;
-use crate::PgRow;
+#[cfg(feature = "mssql")]
+use anyhow::Ok;
 use anyhow::Result;
 use tokio::sync::Mutex;
 
 #[cfg(feature = "mssql")]
 mod mssql_ops {
+  pub use crate::MssqlRow;
   pub use tiberius::{Client, Config, FromSql};
   pub use tokio::net::TcpStream;
   pub use tokio_util::compat::{Compat, TokioAsyncWriteCompatExt};
@@ -18,6 +19,7 @@ mod mssql_ops {
 
 #[cfg(feature = "pgsql")]
 mod pgsql_ops {
+  pub use crate::PgRow;
   pub use tokio_postgres::types::FromSql;
   pub use tokio_postgres::{Client as PgClient, NoTls, connect};
 }
@@ -28,6 +30,13 @@ pub enum DbClient {
   Mssql(mssql_ops::Client<mssql_ops::Compat<mssql_ops::TcpStream>>),
   #[cfg(feature = "pgsql")]
   Pgsql(pgsql_ops::PgClient),
+}
+
+pub enum DbClientType {
+  #[cfg(feature = "mssql")]
+  Mssql,
+  #[cfg(feature = "pgsql")]
+  Pgsql,
 }
 
 pub type DbPool = Arc<Mutex<Vec<DbClient>>>;
@@ -52,25 +61,8 @@ impl DbManager {
 
     let mut connections = Vec::with_capacity(pool_size as usize);
 
-    #[cfg(feature = "mssql")]
-    if !conn_str.starts_with("postgresql://") {
-      if let Some(config) = mssql_ops::Config::from_ado_string(conn_str)
-        .ok()
-        .or_else(|| mssql_ops::Config::from_jdbc_string(conn_str).ok())
-      {
-        for _ in 0..pool_size {
-          let mut config = config.clone();
-          config.trust_cert();
-          let tcp = mssql_ops::TcpStream::connect(config.get_addr()).await?;
-          tcp.set_nodelay(true)?;
-          let client = mssql_ops::Client::connect(config, mssql_ops::compat_stream(tcp)).await?;
-          connections.push(DbClient::Mssql(client));
-        }
-      }
-    }
-
-    #[cfg(feature = "pgsql")]
-    if conn_str.starts_with("postgresql://") {
+    if conn_str.starts_with("postgresql://") || conn_str.starts_with("postgres://") {
+      #[cfg(feature = "pgsql")]
       for _ in 0..pool_size {
         let (client, connection) = pgsql_ops::connect(
           &DbManager::postgres_url_to_tokio(conn_str),
@@ -83,6 +75,21 @@ impl DbManager {
           }
         });
         connections.push(DbClient::Pgsql(client));
+      }
+    } else {
+      #[cfg(feature = "mssql")]
+      if let Some(config) = mssql_ops::Config::from_ado_string(conn_str)
+        .ok()
+        .or_else(|| mssql_ops::Config::from_jdbc_string(conn_str).ok())
+      {
+        for _ in 0..pool_size {
+          let mut config = config.clone();
+          config.trust_cert();
+          let tcp = mssql_ops::TcpStream::connect(config.get_addr()).await?;
+          tcp.set_nodelay(true)?;
+          let client = mssql_ops::Client::connect(config, mssql_ops::compat_stream(tcp)).await?;
+          connections.push(DbClient::Mssql(client));
+        }
       }
     }
 
@@ -165,7 +172,6 @@ impl DbManager {
   }
 }
 
-// Needed so DbManager can be cloned (Arc inside makes this cheap)
 impl Clone for DbManager {
   fn clone(&self) -> Self {
     Self {
@@ -203,17 +209,12 @@ impl Drop for PooledClient {
 
 pub enum DbRow<'a> {
   #[cfg(feature = "mssql")]
-  Mssql(&'a MssqlRow),
+  Mssql(&'a mssql_ops::MssqlRow),
   #[cfg(feature = "pgsql")]
-  Pgsql(&'a PgRow),
+  Pgsql(&'a pgsql_ops::PgRow),
 }
 
 impl<'a> DbRow<'a> {
-  /// .
-  ///
-  /// # Errors
-  ///
-  /// This function will return an error if .
   #[cfg(feature = "mssql")]
   pub fn get_mssql<'r, R>(&self, idx: &str) -> Result<Option<R>>
   where
@@ -229,11 +230,6 @@ impl<'a> DbRow<'a> {
     }
   }
 
-  /// .
-  ///
-  /// # Errors
-  ///
-  /// This function will return an error if .
   #[cfg(feature = "pgsql")]
   pub fn get_pgsql<'p, T>(&'p self, idx: usize) -> Result<T>
   where
