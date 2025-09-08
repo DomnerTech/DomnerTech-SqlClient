@@ -1,6 +1,6 @@
 pub mod pool_manager;
 
-use anyhow::Result;
+pub use anyhow::Result;
 
 #[cfg(feature = "mssql")]
 pub use tiberius::*;
