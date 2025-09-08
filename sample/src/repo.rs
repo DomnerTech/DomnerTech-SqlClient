@@ -1,6 +1,8 @@
+use chrono::NaiveDateTime;
 use domner_tech_sql_client::{
   CommandType, SqlRepo,
   pool_manager::{DbManager, DbRow, PooledClient},
+  time::chrono::{DateTime, Utc},
 };
 
 use anyhow::Result;
@@ -57,12 +59,20 @@ pub struct User {
   pub name: String,
   pub password: String,
   pub email: String,
+  pub created_at: Option<DateTime<Utc>>,
 }
 
 impl<'a> From<&DbRow<'a>> for User {
   fn from(value: &DbRow<'a>) -> Self {
     match value {
       DbRow::Mssql(row) => {
+        let naive_created_at: NaiveDateTime = row
+          .try_get::<NaiveDateTime, &str>("created_at")
+          .expect("Failed to get created_at")
+          .unwrap_or_default();
+        let created_at: DateTime<Utc> =
+          DateTime::<Utc>::from_naive_utc_and_offset(naive_created_at, Utc);
+
         Self {
           id: row
             .try_get::<i32, &str>("id")
@@ -88,6 +98,7 @@ impl<'a> From<&DbRow<'a>> for User {
             .expect("Failed to get password")
             .unwrap_or_default()
             .to_string(),
+          created_at: Some(created_at),
         }
       }
       DbRow::Pgsql(row) => {
@@ -109,6 +120,7 @@ impl<'a> From<&DbRow<'a>> for User {
             .try_get::<&str, &str>("password")
             .unwrap_or_default()
             .to_string(),
+          created_at: None,
         }
       }
     }

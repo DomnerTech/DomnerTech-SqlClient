@@ -3,6 +3,9 @@ pub mod pool_manager;
 use anyhow::Result;
 
 #[cfg(feature = "mssql")]
+pub use tiberius::*;
+
+#[cfg(feature = "mssql")]
 pub use tiberius::Row as MssqlRow;
 
 #[cfg(feature = "mssql")]
