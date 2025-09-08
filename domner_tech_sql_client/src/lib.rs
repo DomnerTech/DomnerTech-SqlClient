@@ -116,7 +116,7 @@ impl SqlRepo {
     cmd_type: CommandType,
   ) -> Result<u64> {
     let client = pooled_client.client();
-    let result = match client {
+    match client {
       //client.execute(&query, &params).await?;
       #[cfg(feature = "mssql")]
       DbClient::Mssql(c) => {
@@ -136,8 +136,7 @@ impl SqlRepo {
       }
       #[cfg(not(any(feature = "mssql", feature = "pgsql")))]
       _ => return Err(anyhow::anyhow!("No database feature enabled.")),
-    };
-    result
+    }
   }
 
   pub async fn execute_bulk_insert(
@@ -152,7 +151,7 @@ impl SqlRepo {
 
     let client = pooled_client.client();
 
-    let result = match client {
+    match client {
       #[cfg(feature = "mssql")]
       DbClient::Mssql(c) => {
         let mut values = Vec::new();
@@ -203,9 +202,7 @@ impl SqlRepo {
       }
       #[cfg(not(any(feature = "mssql", feature = "pgsql")))]
       _ => Err(anyhow::anyhow!("No database feature enabled.")),
-    };
-
-    result
+    }
   }
 
   pub async fn execute_command_query<T>(
