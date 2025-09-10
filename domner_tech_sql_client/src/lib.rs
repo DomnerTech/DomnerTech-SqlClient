@@ -1,6 +1,7 @@
 pub mod pool_manager;
 
 pub use anyhow::Result;
+pub use uuid::*;
 
 #[cfg(feature = "mssql")]
 pub use tiberius::*;
@@ -66,6 +67,17 @@ impl UnifiedToSql for &str {
 }
 
 impl UnifiedToSql for String {
+  #[cfg(feature = "mssql")]
+  fn to_mssql_param(&self) -> Result<&dyn MssqlToSql> {
+    Ok(self)
+  }
+  #[cfg(feature = "pgsql")]
+  fn to_pgsql_param(&self) -> Result<&(dyn PgToSql + Sync)> {
+    Ok(self)
+  }
+}
+
+impl UnifiedToSql for Uuid {
   #[cfg(feature = "mssql")]
   fn to_mssql_param(&self) -> Result<&dyn MssqlToSql> {
     Ok(self)

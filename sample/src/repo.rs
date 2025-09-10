@@ -1,6 +1,6 @@
 use chrono::NaiveDateTime;
 use domner_tech_sql_client::{
-  CommandType, SqlRepo,
+  CommandType, SqlRepo, Uuid,
   pool_manager::{DbManager, DbRow, PooledClient},
   time::chrono::{DateTime, Utc},
 };
@@ -39,7 +39,6 @@ impl<'a> UserRepo<'a> {
 
   pub async fn get_users(&mut self, pool_name: &str) -> Result<Vec<User>> {
     let mut client_pool = self.get_client(pool_name).await;
-
     let user = SqlRepo::execute_command_query(
       &mut client_pool,
       "select 1 as id, 'hi' as user_name, name, email, password from users;",

@@ -3,7 +3,7 @@ authors = [
   "Sokcheanith Ros <sokcheanith1031@gmail.com>"
 ]
 name = "domner_tech_sql_client"
-version = "0.1.1"
+version = "0.1.2"
 edition = "2024"
 documentation = "https://github.com/DomnerTech/DomnerTech-SqlClient"
 keywords = ["tds", "mssql", "sql", "postgresql", "pgsql"]
@@ -16,10 +16,11 @@ repository = "https://github.com/DomnerTech/DomnerTech-SqlClient"
 anyhow = "1.0.99"
 tokio = {version = "1.47.1", features = ["full"]}
 tokio-util = {version = "0.7.16", features = ["compat"]}
+uuid = {version = "1.18.1", features = ["v4","fast-rng", "serde"]}
 
 futures-util = {version = "0.3.31", optional = true}
-tiberius = {version = "0.12.3", optional = true, features = ["chrono", "sql-browser-tokio"]}
-tokio-postgres = {version = "0.7.13", optional = true}
+tiberius = {version = "0.12.3", optional = true, features = ["chrono", "sql-browser-tokio", "tds73"]}
+tokio-postgres = {version = "0.7.13", optional = true, features = ["with-uuid-1"]}
 postgres-native-tls = {version = "0.5.1", optional = true} # For SSL support in PgSQL
 
 [features]
