@@ -26,12 +26,23 @@ pub enum CommandType {
   Text,
   StoreProcedure,
   TableDirect,
+  #[cfg(feature = "pgsql")]
+  Function,
 }
 impl CommandType {
-  fn prefix(&self) -> &'static str {
+  fn prefix(&self, db_type: Option<&DbClientType>) -> &'static str {
     match self {
       CommandType::Text => "",
-      CommandType::StoreProcedure => "EXEC ",
+      CommandType::StoreProcedure => match db_type.unwrap() {
+        #[cfg(feature = "mssql")]
+        DbClientType::Mssql => "EXEC ",
+        #[cfg(feature = "pgsql")]
+        DbClientType::Pgsql => "CALL ",
+        #[cfg(not(any(feature = "mssql", feature = "pgsql")))]
+        _ => panic!("No database feature enabled."),
+      },
+      #[cfg(feature = "pgsql")]
+      CommandType::Function => "SELECT * FROM ",
       CommandType::TableDirect => "SELECT * FROM ",
     }
   }
@@ -99,28 +110,54 @@ impl SqlRepo {
   ) -> String {
     match cmd_type {
       CommandType::Text => cmd_txt.to_string(),
-      CommandType::StoreProcedure => {
-        let placeholders: Vec<String> = match db_type {
-          #[cfg(feature = "mssql")]
-          DbClientType::Mssql => (0..params_count).map(|i| format!("@P{}", i + 1)).collect(),
-          #[cfg(feature = "pgsql")]
-          DbClientType::Pgsql => (1..=params_count).map(|i| format!("${}", i)).collect(),
-          #[cfg(not(any(feature = "mssql", feature = "pgsql")))]
-          _ => panic!("No database feature enabled."),
-        };
-
+      CommandType::StoreProcedure => match db_type {
+        #[cfg(feature = "mssql")]
+        DbClientType::Mssql => {
+          let placeholders: Vec<String> =
+            (0..params_count).map(|i| format!("@P{}", i + 1)).collect();
+          if placeholders.is_empty() {
+            format!("{}{}", cmd_type.prefix(Some(&db_type)), cmd_txt)
+          } else {
+            format!(
+              "{}{} {}",
+              cmd_type.prefix(Some(&db_type)),
+              cmd_txt,
+              placeholders.join(", ")
+            )
+          }
+        }
+        #[cfg(feature = "pgsql")]
+        DbClientType::Pgsql => {
+          let placeholders: Vec<String> = (1..=params_count).map(|i| format!("${}", i)).collect();
+          if placeholders.is_empty() {
+            format!("{}{}()", cmd_type.prefix(Some(&db_type)), cmd_txt)
+          } else {
+            format!(
+              "{}{}({})",
+              cmd_type.prefix(Some(&db_type)),
+              cmd_txt,
+              placeholders.join(", ")
+            )
+          }
+        }
+        #[cfg(not(any(feature = "mssql", feature = "pgsql")))]
+        _ => panic!("No database feature enabled."),
+      },
+      CommandType::TableDirect => format!("{}{}", cmd_type.prefix(None), cmd_txt),
+      #[cfg(feature = "pgsql")]
+      CommandType::Function => {
+        let placeholders: Vec<String> = (1..=params_count).map(|i| format!("${}", i)).collect();
         if placeholders.is_empty() {
-          format!("{}{}", cmd_type.prefix(), cmd_txt)
+          format!("{}{}()", cmd_type.prefix(None), cmd_txt)
         } else {
           format!(
-            "{}{} {}",
-            cmd_type.prefix(),
+            "{}{}({})",
+            cmd_type.prefix(None),
             cmd_txt,
             placeholders.join(", ")
           )
         }
       }
-      CommandType::TableDirect => format!("{}{}", cmd_type.prefix(), cmd_txt),
     }
   }
 
@@ -258,14 +295,13 @@ impl SqlRepo {
         let query =
           Self::build_query_with_params(DbClientType::Pgsql, cmd_txt, cmd_type, params.len());
         let rows = c.query(&query, pg_params?.as_slice()).await?;
-
+        println!("{} {}", query, rows.len());
         let mut results: Vec<T> = Vec::new();
         for row in &rows {
           results.push(map_rows(&DbRow::Pgsql(row)));
         }
         results
       }
-
       #[cfg(not(any(feature = "mssql", feature = "pgsql")))]
       _ => return Err(anyhow::anyhow!("No database feature enabled.")),
     };

@@ -30,7 +30,7 @@ async fn main() -> Result<()> {
   println!("\nAttempting to connect to PostgreSQL...");
   // Replace with your actual PostgreSQL connection string
   const PGSQL_POOL: &str = "pgsql_pool";
-  let conn_str_pgsql = "postgresql://postgres:admin@localhost:5432/crud-rust?schema=public";
+  let conn_str_pgsql = "postgresql://postgres:admin@localhost:5432/crud-rust";
   if let Err(e) = db_manager.init_pool(PGSQL_POOL, conn_str_pgsql, 1).await {
     eprintln!("Failed to connect to PostgreSQL: {}", e);
   } else {

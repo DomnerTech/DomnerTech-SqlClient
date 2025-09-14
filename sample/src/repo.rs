@@ -41,9 +41,9 @@ impl<'a> UserRepo<'a> {
     let mut client_pool = self.get_client(pool_name).await;
     let user = SqlRepo::execute_command_query(
       &mut client_pool,
-      "select 1 as id, 'hi' as user_name, name, email, password from users;",
-      &[],
-      CommandType::Text,
+      "public.get_users",
+      &[&"John Doe"],
+      CommandType::Function,
       |row| User::from(row),
     )
     .await?;
@@ -101,6 +101,12 @@ impl From<&DbRow<'_>> for User {
         }
       }
       DbRow::Pgsql(row) => {
+        let naive_created_at: NaiveDateTime = value
+          .get_pgsql::<NaiveDateTime>("created_at")
+          .unwrap_or_default();
+
+        let created_at: DateTime<Utc> =
+          DateTime::<Utc>::from_naive_utc_and_offset(naive_created_at, Utc);
         Self {
           id: row.try_get::<&str, i32>("id").unwrap_or_default(), // fallback if null
           name: row
@@ -119,7 +125,7 @@ impl From<&DbRow<'_>> for User {
             .get_pgsql::<&str>("password")
             .unwrap_or_default()
             .to_string(),
-          created_at: None,
+          created_at: Some(created_at),
         }
       }
     }

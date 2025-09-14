@@ -31,6 +31,7 @@ pub enum DbClient {
   Pgsql(pgsql_ops::PgClient),
 }
 
+#[derive(Debug, Clone, Copy)]
 pub enum DbClientType {
   #[cfg(feature = "mssql")]
   Mssql,
