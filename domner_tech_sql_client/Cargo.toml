@@ -25,6 +25,6 @@ tokio-postgres = {version = "0.7.13", optional = true, features = ["with-uuid-1"
 postgres-native-tls = {version = "0.5.1", optional = true} # For SSL support in PgSQL
 
 [features]
-default = ["pgsql"]
+default = []
 mssql = ["tiberius"]
 pgsql = ["tokio-postgres", "postgres-native-tls", "futures-util"]
