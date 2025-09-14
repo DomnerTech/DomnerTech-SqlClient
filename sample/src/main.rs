@@ -1,9 +1,9 @@
 mod repo;
 
-use anyhow::Result;
-use domner_tech_sql_client::pool_manager::DbManager;
-
 use crate::repo::UserRepo;
+use anyhow::Result;
+use chrono::prelude::*;
+use domner_tech_sql_client::pool_manager::DbManager;
 
 #[tokio::main]
 async fn main() -> Result<()> {
@@ -35,7 +35,7 @@ async fn main() -> Result<()> {
     eprintln!("Failed to connect to PostgreSQL: {}", e);
   } else {
     println!("PostgreSQL connection pool initialized successfully.");
-    if let Ok(users) = repo.get_users(PGSQL_POOL).await {
+    if let Ok(users) = repo.get_users(PGSQL_POOL, Utc::now()).await {
       println!("{:?}", users);
     } else {
       println!("Failed to get users.")

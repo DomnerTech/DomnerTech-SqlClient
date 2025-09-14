@@ -1,5 +1,7 @@
 pub mod pool_manager;
+pub mod types;
 
+use crate::types::UnifiedToSql;
 pub use anyhow::Result;
 pub use uuid::*;
 
@@ -45,57 +47,6 @@ impl CommandType {
       CommandType::Function => "SELECT * FROM ",
       CommandType::TableDirect => "SELECT * FROM ",
     }
-  }
-}
-
-pub trait UnifiedToSql {
-  #[cfg(feature = "mssql")]
-  fn to_mssql_param(&self) -> Result<&dyn MssqlToSql>;
-  #[cfg(feature = "pgsql")]
-  fn to_pgsql_param(&self) -> Result<&(dyn PgToSql + Sync)>;
-}
-
-impl UnifiedToSql for i32 {
-  #[cfg(feature = "mssql")]
-  fn to_mssql_param(&self) -> Result<&dyn MssqlToSql> {
-    Ok(self)
-  }
-  #[cfg(feature = "pgsql")]
-  fn to_pgsql_param(&self) -> Result<&(dyn PgToSql + Sync)> {
-    Ok(self)
-  }
-}
-
-impl UnifiedToSql for &str {
-  #[cfg(feature = "mssql")]
-  fn to_mssql_param(&self) -> Result<&dyn MssqlToSql> {
-    Ok(self)
-  }
-  #[cfg(feature = "pgsql")]
-  fn to_pgsql_param(&self) -> Result<&(dyn PgToSql + Sync)> {
-    Ok(self)
-  }
-}
-
-impl UnifiedToSql for String {
-  #[cfg(feature = "mssql")]
-  fn to_mssql_param(&self) -> Result<&dyn MssqlToSql> {
-    Ok(self)
-  }
-  #[cfg(feature = "pgsql")]
-  fn to_pgsql_param(&self) -> Result<&(dyn PgToSql + Sync)> {
-    Ok(self)
-  }
-}
-
-impl UnifiedToSql for Uuid {
-  #[cfg(feature = "mssql")]
-  fn to_mssql_param(&self) -> Result<&dyn MssqlToSql> {
-    Ok(self)
-  }
-  #[cfg(feature = "pgsql")]
-  fn to_pgsql_param(&self) -> Result<&(dyn PgToSql + Sync)> {
-    Ok(self)
   }
 }
 
