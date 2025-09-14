@@ -1,7 +1,5 @@
-use std::{collections::HashMap, sync::Arc};
-
-#[cfg(feature = "mssql")]
 use anyhow::Result;
+use std::{collections::HashMap, sync::Arc};
 use tokio::sync::Mutex;
 
 #[cfg(feature = "mssql")]
