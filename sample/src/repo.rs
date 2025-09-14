@@ -1,6 +1,6 @@
 use chrono::NaiveDateTime;
 use domner_tech_sql_client::{
-  CommandType, SqlRepo, Uuid,
+  CommandType, SqlRepo,
   pool_manager::{DbManager, DbRow, PooledClient},
   time::chrono::{DateTime, Utc},
 };
@@ -61,8 +61,8 @@ pub struct User {
   pub created_at: Option<DateTime<Utc>>,
 }
 
-impl<'a> From<&DbRow<'a>> for User {
-  fn from(value: &DbRow<'a>) -> Self {
+impl From<&DbRow<'_>> for User {
+  fn from(value: &DbRow) -> Self {
     match value {
       DbRow::Mssql(row) => {
         let naive_created_at: NaiveDateTime = row
@@ -115,8 +115,8 @@ impl<'a> From<&DbRow<'a>> for User {
             .try_get::<&str, &str>("user_name")
             .unwrap_or_default()
             .to_string(),
-          password: row
-            .try_get::<&str, &str>("password")
+          password: value
+            .get_pgsql::<&str>("password")
             .unwrap_or_default()
             .to_string(),
           created_at: None,

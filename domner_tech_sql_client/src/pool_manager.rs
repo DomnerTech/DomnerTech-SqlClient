@@ -1,7 +1,6 @@
 use std::{collections::HashMap, sync::Arc};
 
 #[cfg(feature = "mssql")]
-use anyhow::Ok;
 use anyhow::Result;
 use tokio::sync::Mutex;
 
@@ -216,7 +215,7 @@ pub enum DbRow<'a> {
 
 impl<'a> DbRow<'a> {
   #[cfg(feature = "mssql")]
-  pub fn get_mssql<'r, R>(&self, idx: &str) -> Result<Option<R>>
+  pub fn get_mssql<'r, R>(&self, idx: &str) -> Result<R>
   where
     'a: 'r,
     R: mssql_ops::FromSql<'r>,
@@ -224,21 +223,24 @@ impl<'a> DbRow<'a> {
     match self {
       DbRow::Mssql(row) => {
         let value: Result<Option<R>> = row.try_get::<R, &str>(idx).map_err(|e| anyhow::anyhow!(e));
-        value
+        if let Ok(Some(val)) = value {
+          return Ok(val);
+        }
+        Err(anyhow::anyhow!("Failed to get {}", idx))
       }
       _ => Err(anyhow::anyhow!("Mismatched database driver")),
     }
   }
 
   #[cfg(feature = "pgsql")]
-  pub fn get_pgsql<'p, T>(&'p self, idx: usize) -> Result<T>
+  pub fn get_pgsql<'p, T>(&'p self, idx: &str) -> Result<T>
   where
     T: pgsql_ops::FromSql<'p>,
   {
     match self {
       DbRow::Pgsql(row) => {
-        let value: T = row.get::<usize, T>(idx);
-        Ok(value)
+        let value = row.try_get::<&str, T>(idx).map_err(|e| anyhow::anyhow!(e));
+        value
       }
       _ => Err(anyhow::anyhow!("Mismatched database driver")),
     }
