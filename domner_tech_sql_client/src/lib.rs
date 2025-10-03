@@ -1,33 +1,17 @@
 pub mod pool_manager;
 pub mod types;
 
-use crate::types::UnifiedToSql;
-pub use anyhow::Result;
-pub use uuid::*;
-
-#[cfg(feature = "mssql")]
-pub use tiberius::*;
-
-#[cfg(feature = "mssql")]
-pub use tiberius::Row as MssqlRow;
-
-#[cfg(feature = "mssql")]
-pub use tiberius::ToSql as MssqlToSql;
-
-#[cfg(feature = "pgsql")]
-pub use tokio_postgres::*;
-
-#[cfg(feature = "pgsql")]
-pub use rust_decimal::*;
-
-#[cfg(feature = "pgsql")]
-pub use tokio_postgres::types::ToSql as PgToSql;
-
-#[cfg(feature = "pgsql")]
-pub use tokio_postgres::Row as PgRow;
-
 use crate::pool_manager::DbClientType;
 use crate::pool_manager::{DbClient, DbRow, PooledClient};
+use crate::types::UnifiedToSql;
+
+#[cfg(feature = "mssql")]
+use crate::types::sql::mssql;
+
+#[cfg(feature = "pgsql")]
+use crate::types::sql::pgsql;
+
+pub use anyhow::Result;
 
 #[derive(Debug, Clone, Copy)]
 pub enum CommandType {
@@ -129,7 +113,7 @@ impl SqlRepo {
       //client.execute(&query, &params).await?;
       #[cfg(feature = "mssql")]
       DbClient::Mssql(c) => {
-        let mssql_params: Result<Vec<&dyn MssqlToSql>> =
+        let mssql_params: Result<Vec<&dyn mssql::ToSql>> =
           params.iter().map(|p| p.to_mssql_param()).collect();
         let query =
           Self::build_query_with_params(DbClientType::Mssql, cmd_txt, cmd_type, params.len());
@@ -137,7 +121,7 @@ impl SqlRepo {
       }
       #[cfg(feature = "pgsql")]
       DbClient::Pgsql(c) => {
-        let pg_params: Result<Vec<&(dyn PgToSql + Sync)>> =
+        let pg_params: Result<Vec<&(dyn pgsql::types::ToSql + Sync)>> =
           params.iter().map(|p| p.to_pgsql_param()).collect();
         let query =
           Self::build_query_with_params(DbClientType::Pgsql, cmd_txt, cmd_type, params.len());
@@ -164,7 +148,7 @@ impl SqlRepo {
       #[cfg(feature = "mssql")]
       DbClient::Mssql(c) => {
         let mut values = Vec::new();
-        let mut flat_params: Vec<&dyn MssqlToSql> = Vec::new();
+        let mut flat_params: Vec<&dyn mssql::ToSql> = Vec::new();
 
         for (row_idx, entity) in entities.iter().enumerate() {
           let mut row_placeholders = Vec::new();
@@ -188,7 +172,7 @@ impl SqlRepo {
       #[cfg(feature = "pgsql")]
       DbClient::Pgsql(c) => {
         let mut values = Vec::new();
-        let mut flat_params: Vec<&(dyn PgToSql + Sync)> = Vec::new();
+        let mut flat_params: Vec<&(dyn pgsql::types::ToSql + Sync)> = Vec::new();
 
         for (row_idx, entity) in entities.iter().enumerate() {
           let mut row_placeholders = Vec::new();
@@ -232,7 +216,7 @@ impl SqlRepo {
       DbClient::Mssql(c) => {
         use crate::pool_manager::DbClientType;
 
-        let mssql_params: Result<Vec<&dyn MssqlToSql>> =
+        let mssql_params: Result<Vec<&dyn mssql::ToSql>> =
           params.iter().map(|p| p.to_mssql_param()).collect();
         let query =
           Self::build_query_with_params(DbClientType::Mssql, cmd_txt, cmd_type, params.len());
@@ -247,7 +231,7 @@ impl SqlRepo {
 
       #[cfg(feature = "pgsql")]
       DbClient::Pgsql(c) => {
-        let pg_params: Result<Vec<&(dyn PgToSql + Sync)>> =
+        let pg_params: Result<Vec<&(dyn pgsql::types::ToSql + Sync)>> =
           params.iter().map(|p| p.to_pgsql_param()).collect();
         let query =
           Self::build_query_with_params(DbClientType::Pgsql, cmd_txt, cmd_type, params.len());

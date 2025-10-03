@@ -4,8 +4,7 @@ use tokio::sync::Mutex;
 
 #[cfg(feature = "mssql")]
 mod mssql_ops {
-  pub use crate::MssqlRow;
-  pub use tiberius::{Client, Config, FromSql};
+  pub use crate::types::sql::mssql::{Client, Config, FromSql, Row as MssqlRow};
   pub use tokio::net::TcpStream;
   pub use tokio_util::compat::{Compat, TokioAsyncWriteCompatExt};
   /// Helper function to wrap a TcpStream for Tiberius
@@ -16,9 +15,9 @@ mod mssql_ops {
 
 #[cfg(feature = "pgsql")]
 mod pgsql_ops {
-  pub use crate::PgRow;
-  pub use tokio_postgres::types::FromSql;
-  pub use tokio_postgres::{Client as PgClient, NoTls, connect};
+  pub use crate::types::sql::pgsql::{
+    Client as PgClient, NoTls, Row as PgRow, connect, types::FromSql,
+  };
 }
 
 // The DbClient type will be an enum that is only compiled if the corresponding feature is enabled.

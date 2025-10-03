@@ -1,11 +1,11 @@
-use chrono::NaiveDateTime;
-use domner_tech_sql_client::{
-  CommandType, Decimal, SqlRepo,
-  pool_manager::{DbManager, DbRow, PooledClient},
-  time::chrono::{DateTime, Utc},
-};
+use chrono::{DateTime, NaiveDateTime, Utc};
 
 use anyhow::Result;
+use domner_tech_sql_client::{
+  CommandType, SqlRepo,
+  pool_manager::{DbManager, DbRow, PooledClient},
+  types::decimal::decimal::Decimal,
+};
 
 pub struct UserRepo<'a> {
   db: &'a DbManager,
