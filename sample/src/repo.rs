@@ -1,7 +1,6 @@
 use chrono::NaiveDateTime;
 use domner_tech_sql_client::{
-  CommandType, SqlRepo,
-  numeric::Numeric,
+  CommandType, Decimal, SqlRepo,
   pool_manager::{DbManager, DbRow, PooledClient},
   time::chrono::{DateTime, Utc},
 };
@@ -59,6 +58,7 @@ pub struct User {
   pub name: String,
   pub password: String,
   pub email: String,
+  pub price: Decimal,
   pub created_at: Option<DateTime<Utc>>,
 }
 
@@ -98,6 +98,10 @@ impl From<&DbRow<'_>> for User {
             .unwrap_or_default()
             .to_string(),
           created_at: Some(created_at),
+          price: row
+            .try_get::<Decimal, &str>("price")
+            .expect("Failed to get price")
+            .unwrap_or_default(),
         }
       }
       DbRow::Pgsql(row) => {
@@ -126,6 +130,7 @@ impl From<&DbRow<'_>> for User {
             .unwrap_or_default()
             .to_string(),
           created_at: Some(created_at),
+          price: row.try_get::<&str, Decimal>("price").unwrap_or_default(),
         }
       }
     }

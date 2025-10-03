@@ -15,6 +15,12 @@ pub use tiberius::Row as MssqlRow;
 pub use tiberius::ToSql as MssqlToSql;
 
 #[cfg(feature = "pgsql")]
+pub use tokio_postgres::*;
+
+#[cfg(feature = "pgsql")]
+pub use rust_decimal::*;
+
+#[cfg(feature = "pgsql")]
 pub use tokio_postgres::types::ToSql as PgToSql;
 
 #[cfg(feature = "pgsql")]

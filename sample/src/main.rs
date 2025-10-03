@@ -35,11 +35,14 @@ async fn main() -> Result<()> {
     eprintln!("Failed to connect to PostgreSQL: {}", e);
   } else {
     println!("PostgreSQL connection pool initialized successfully.");
-    if let Ok(users) = repo.get_users(PGSQL_POOL, Utc::now()).await {
-      println!("{:?}", users);
-    } else {
-      println!("Failed to get users.")
-    }
+    match repo.get_users(PGSQL_POOL, Utc::now()).await {
+      Ok(users) => {
+        println!("{:?}", users);
+      }
+      Err(e) => {
+        println!("Failed to get users. {}", e)
+      }
+    };
   }
   println!("\nTesting complete.");
 
