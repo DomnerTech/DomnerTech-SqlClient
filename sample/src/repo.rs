@@ -1,11 +1,12 @@
-use chrono::{DateTime, NaiveDateTime, Utc};
-
 use anyhow::Result;
+use chrono::{DateTime, NaiveDateTime, Utc};
 use domner_tech_sql_client::{
   CommandType, SqlRepo,
   pool_manager::{DbManager, DbRow, PooledClient},
-  types::decimal::decimal::Decimal,
+  types::decimal::Decimal,
 };
+
+use serde_json::json;
 
 pub struct UserRepo<'a> {
   db: &'a DbManager,
@@ -38,11 +39,15 @@ impl<'a> UserRepo<'a> {
   }
 
   pub async fn get_users(&mut self, pool_name: &str, datetime: DateTime<Utc>) -> Result<Vec<User>> {
+    let my_json = json!({
+        "category_id": 1,
+        "filter": "top"
+    });
     let mut client_pool = self.get_client(pool_name).await;
     let user = SqlRepo::execute_command_query(
       &mut client_pool,
       "public.get_users",
-      &[&datetime],
+      &[&datetime, &my_json],
       CommandType::Function,
       |row| User::from(row),
     )

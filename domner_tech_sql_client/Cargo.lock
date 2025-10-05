@@ -316,6 +316,8 @@ dependencies = [
  "futures-util",
  "postgres-native-tls",
  "rust_decimal",
+ "serde",
+ "serde_json",
  "tiberius",
  "tokio",
  "tokio-postgres",
@@ -998,6 +1000,8 @@ dependencies = [
  "chrono",
  "fallible-iterator",
  "postgres-protocol",
+ "serde_core",
+ "serde_json",
  "uuid",
 ]
 

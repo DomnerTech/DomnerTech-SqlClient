@@ -10,6 +10,7 @@ use crate::types::sql::pgsql;
 
 pub use anyhow::Result;
 use chrono::{DateTime, NaiveDate, NaiveDateTime, NaiveTime, Utc};
+use serde_json::Value;
 pub trait UnifiedToSql {
   #[cfg(feature = "mssql")]
   fn to_mssql_param(&self) -> Result<&dyn mssql::ToSql>;
@@ -318,6 +319,17 @@ impl UnifiedToSql for Option<NaiveDateTime> {
   #[cfg(feature = "mssql")]
   fn to_mssql_param(&self) -> Result<&dyn mssql::ToSql> {
     Ok(self)
+  }
+  #[cfg(feature = "pgsql")]
+  fn to_pgsql_param(&self) -> Result<&(dyn pgsql::types::ToSql + Sync)> {
+    Ok(self)
+  }
+}
+
+impl UnifiedToSql for Value {
+  #[cfg(feature = "mssql")]
+  fn to_mssql_param(&self) -> Result<&dyn mssql::ToSql> {
+    todo!("Not implemented for MSSQL yet");
   }
   #[cfg(feature = "pgsql")]
   fn to_pgsql_param(&self) -> Result<&(dyn pgsql::types::ToSql + Sync)> {
