@@ -309,7 +309,7 @@ dependencies = [
 
 [[package]]
 name = "domner_tech_sql_client"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "anyhow",
  "chrono",

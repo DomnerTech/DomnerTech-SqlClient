@@ -3,7 +3,7 @@ authors = [
   "Sokcheanith Ros <sokcheanith1031@gmail.com>"
 ]
 name = "domner_tech_sql_client"
-version = "0.2.0"
+version = "0.2.1"
 edition = "2024"
 documentation = "https://github.com/DomnerTech/DomnerTech-SqlClient"
 keywords = ["tds", "mssql", "sql", "postgresql", "pgsql"]
